@@ -12,27 +12,31 @@ def wait_for_key(target=keyboard.Key.shift_r):
     with keyboard.Listener(on_press=lambda k: False if k == target else None) as listener:
         listener.join()
 
-def rgb_to_hsl(rgb: tuple) -> tuple[int, int, int]:
+def rgb_to_hsb(rgb: tuple) -> tuple[int, int, int]:
     r, g, b = rgb[0] / 255.0, rgb[1] / 255.0, rgb[2] / 255.0
 
     max_c = max(r, g, b)
     min_c = min(r, g, b)
-    l = (max_c + min_c) / 2.0
+    d = max_c - min_c
 
-    if max_c == min_c:
-        h = s = 0.0
+    # Brightness
+    brightness = max_c
+
+    # Saturation
+    s = 0.0 if max_c == 0 else d / max_c
+
+    # Hue
+    if d == 0:
+        h = 0.0
+    elif max_c == r:
+        h = (g - b) / d + (6 if g < b else 0)
+    elif max_c == g:
+        h = (b - r) / d + 2
     else:
-        d = max_c - min_c
-        s = d / (1 - abs(2 * l - 1))
-        if max_c == r:
-            h = (g - b) / d + (6 if g < b else 0)
-        elif max_c == g:
-            h = (b - r) / d + 2
-        else:
-            h = (r - g) / d + 4
-        h /= 6
+        h = (r - g) / d + 4
+    h /= 6
 
-    return round(h * 360), round(s * 100), round(l * 100)
+    return round(h * 360), round(s * 100), round(brightness * 100)
 
 def pickColor(hsl, hue_position, saturation_position, brightness_position):
     hue_starting = hue_position[0]
@@ -52,27 +56,27 @@ def pickColor(hsl, hue_position, saturation_position, brightness_position):
 
     wait_for_key()
 
-    pyautogui.moveTo(hue_starting[0], hue_y)
+    pyautogui.moveTo(hue_starting[0], hue_y, 2)
     pyautogui.click()
-    pyautogui.moveTo(saturation_starting[0], saturation_y)
+    pyautogui.moveTo(saturation_starting[0], saturation_y, 2)
     pyautogui.click()
-    pyautogui.moveTo(brightness_starting[0], brightness_y)
+    pyautogui.moveTo(brightness_starting[0], brightness_y, 2)
     pyautogui.click()
 
 
     
 
 def main():
-    for i in range(0, 4):
+    for i in range(0, 5):
         wait_for_key()
         screenshot = pyautogui.screenshot()
         screenshot.save("screenshot.png")
 
         rgb_color = pyautogui.pixel(1821, 1304)
-        hsl = rgb_to_hsl(rgb_color)
-
-        pickColor(hsl, HUE_POSITION, SATURATION_POSITION, BRIGHTNESS_POSITION)
-
+        hsb = rgb_to_hsb(rgb_color)
+        print(hsb)
+        pickColor(hsb, HUE_POSITION, SATURATION_POSITION, BRIGHTNESS_POSITION)
+        time.sleep(1)
 
 
 if __name__ == "__main__":    main()
